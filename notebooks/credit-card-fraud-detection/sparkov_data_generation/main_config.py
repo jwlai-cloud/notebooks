@@ -7,15 +7,11 @@ class MainConfig:
 
     # convert type to a tuple
     def convert_config_type(self, x):
-        if type(x) is dict:
-            minval = float(x["min"])
-            maxval = float(x["max"])
-            if maxval < 0:
-                return (minval, float("inf"))
-            else:
-                return (minval, maxval)
-        else:
+        if type(x) is not dict:
             return x
+        minval = float(x["min"])
+        maxval = float(x["max"])
+        return (minval, float("inf")) if maxval < 0 else (minval, maxval)
 
     def all_profiles_dicts(self, main):
 
@@ -44,32 +40,18 @@ class MainConfig:
             if pq == "age":
                 if self.fits_qual(return_age(person_dict), profile_quals[pq]) == False:
                     return False
-            else:
-                if self.fits_qual(person_dict[pq], profile_quals[pq]) == False:
-                    return False
+            elif self.fits_qual(person_dict[pq], profile_quals[pq]) == False:
+                return False
         return True
 
     def fits_qual(self, person_val, range_tuple):
         if type(range_tuple) is list:
             # matching value in string list
             # (e.g. ['M','F'])
-            if unicode(person_val) in range_tuple or str(person_val) in range_tuple:
-                return True
-            # doesn't match
-            else:
-                return False
-
+            return unicode(person_val) in range_tuple or str(person_val) in range_tuple
         elif type(range_tuple) is unicode or type(range_tuple) is str:
-            if unicode(person_val) == unicode(range_tuple):
-                return True
-            # doesn't match
-            else:
-                return False
-
+            return unicode(person_val) == unicode(range_tuple)
         # range
-        if float(person_val) >= float(range_tuple[0]) and float(person_val) <= float(
-            range_tuple[1]
-        ):
-            return True
-        else:
-            return False
+        return float(person_val) >= float(range_tuple[0]) and float(
+            person_val
+        ) <= float(range_tuple[1])

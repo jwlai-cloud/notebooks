@@ -70,9 +70,7 @@ def haversine(lat1: float, long1: float, lat2: float, long2: float) -> float:
     # instead of 6371 as a radius of the Earth, taken as the ball
     # https://rosettacode.org/wiki/Haversine_formula#.D0.9C.D0.9A-61.2F52
     earth_radius = 6367
-    km = earth_radius * c
-
-    return km
+    return earth_radius * c
 
 
 def create_shops_distances_matrix(

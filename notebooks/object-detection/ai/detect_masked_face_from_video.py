@@ -105,94 +105,93 @@ class MakePredictions:
             # grab the frame from the threaded video stream and resize it to have a maximum width of 400 pixels
             ret, frame = vs.read()
 
-            if ret == True:
-                # frame = imutils.resize(frame, width=400)
-                frame = cv2.resize(frame, (3000, 2000))
-
-                # detect faces in the frame and determine if they are wearing a face mask or not
-                # (locs, preds) = predict_helper.detect_and_predict_mask(frame, faceNet, maskNet, conf_level)
-                outputs = predictor(frame)
-                current_labels = outputs["instances"].to("cpu").pred_classes.tolist()
-                current_probabilities = outputs["instances"].to("cpu").scores.tolist()
-                now = datetime.datetime.now()
-                current_time_stamp = now.strftime("%Y-%m-%d %H:%M:%S:%f")
-                current_quarter_time_stamp = now.strftime("%Y-%m-%d %H:%M:%S")
-
-                #                 # uncomment below code to see the prediction box
-                #                 #################################
-                #                 v = Visualizer(frame[:, :, ::-1],
-                #                 metadata=masked_face_metadata,
-                #                 scale=1.0, #0.8
-                #                 instance_mode=ColorMode.IMAGE
-                #                 )
-                #                 out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-                #                 cv2.imshow('frame', out.get_image()[:, :, ::-1])
-
-                # if locs == []:
-                if not labels:
-                    probabilities.append("")
-                    labels.append("")
-                    time_stamp.append(current_time_stamp)
-                    video_id.append(current_video_id)
-                    qtr_ts = self.ceil_dt(now, timedelta(seconds=time_increment))
-                    quarter_time_stamp.append(qtr_ts.strftime("%Y-%m-%d %H:%M:%S"))
-                else:
-                    labels += [["No Mask", "Mask"][y_hat] for y_hat in current_labels]
-                    probabilities += [p * 100 for p in current_probabilities]
-                    time_stamp += [current_time_stamp] * len(current_labels)
-                    video_id += [current_video_id] * len(current_labels)
-                    qtr_ts = self.ceil_dt(now, timedelta(seconds=time_increment))
-                    quarter_time_stamp += [qtr_ts.strftime("%Y-%m-%d %H:%M:%S")] * len(
-                        current_labels
-                    )
-
-                current_time = time.time()
-
-                if current_time - prev_time >= time_increment:
-
-                    # appending the probabilities into a dataframe
-                    prediction_df = pd.DataFrame(
-                        {
-                            "predictions": probabilities,
-                            "label": labels,
-                            "timestamp": time_stamp,
-                            "quarter_timestamp": quarter_time_stamp,
-                            "video_id": video_id,
-                        }
-                    )
-
-                    prediction_df["face_id"] = prediction_df.groupby(
-                        "timestamp"
-                    ).cumcount()
-                    prediction_df = prediction_df[
-                        [
-                            "face_id",
-                            "predictions",
-                            "label",
-                            "timestamp",
-                            "quarter_timestamp",
-                            "video_id",
-                        ]
-                    ]
-
-                    # renaming the output csv file to make it in the csv format
-                    #                     print(os.path.join(output_folder, output_csv))
-                    output_csv = "".join(output_csv.split(".")[:-1]) + ".csv"
-                    with open(os.path.join(output_folder, output_csv), "a") as f:
-
-                        prediction_df.to_csv(
-                            f, header=f.tell() == 0, index=False, line_terminator="\n"
-                        )
-
-                    prev_time = time.time()
-                    labels = []
-                    probabilities = []
-                    time_stamp = []
-                    quarter_time_stamp = []
-                    video_id = []
-
-            else:
+            if ret != True:
                 break
+
+            # frame = imutils.resize(frame, width=400)
+            frame = cv2.resize(frame, (3000, 2000))
+
+            # detect faces in the frame and determine if they are wearing a face mask or not
+            # (locs, preds) = predict_helper.detect_and_predict_mask(frame, faceNet, maskNet, conf_level)
+            outputs = predictor(frame)
+            current_labels = outputs["instances"].to("cpu").pred_classes.tolist()
+            current_probabilities = outputs["instances"].to("cpu").scores.tolist()
+            now = datetime.datetime.now()
+            current_time_stamp = now.strftime("%Y-%m-%d %H:%M:%S:%f")
+            current_quarter_time_stamp = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            #                 # uncomment below code to see the prediction box
+            #                 #################################
+            #                 v = Visualizer(frame[:, :, ::-1],
+            #                 metadata=masked_face_metadata,
+            #                 scale=1.0, #0.8
+            #                 instance_mode=ColorMode.IMAGE
+            #                 )
+            #                 out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+            #                 cv2.imshow('frame', out.get_image()[:, :, ::-1])
+
+            # if locs == []:
+            if not labels:
+                probabilities.append("")
+                labels.append("")
+                time_stamp.append(current_time_stamp)
+                video_id.append(current_video_id)
+                qtr_ts = self.ceil_dt(now, timedelta(seconds=time_increment))
+                quarter_time_stamp.append(qtr_ts.strftime("%Y-%m-%d %H:%M:%S"))
+            else:
+                labels += [["No Mask", "Mask"][y_hat] for y_hat in current_labels]
+                probabilities += [p * 100 for p in current_probabilities]
+                time_stamp += [current_time_stamp] * len(current_labels)
+                video_id += [current_video_id] * len(current_labels)
+                qtr_ts = self.ceil_dt(now, timedelta(seconds=time_increment))
+                quarter_time_stamp += [qtr_ts.strftime("%Y-%m-%d %H:%M:%S")] * len(
+                    current_labels
+                )
+
+            current_time = time.time()
+
+            if current_time - prev_time >= time_increment:
+
+                # appending the probabilities into a dataframe
+                prediction_df = pd.DataFrame(
+                    {
+                        "predictions": probabilities,
+                        "label": labels,
+                        "timestamp": time_stamp,
+                        "quarter_timestamp": quarter_time_stamp,
+                        "video_id": video_id,
+                    }
+                )
+
+                prediction_df["face_id"] = prediction_df.groupby(
+                    "timestamp"
+                ).cumcount()
+                prediction_df = prediction_df[
+                    [
+                        "face_id",
+                        "predictions",
+                        "label",
+                        "timestamp",
+                        "quarter_timestamp",
+                        "video_id",
+                    ]
+                ]
+
+                # renaming the output csv file to make it in the csv format
+                #                     print(os.path.join(output_folder, output_csv))
+                output_csv = "".join(output_csv.split(".")[:-1]) + ".csv"
+                with open(os.path.join(output_folder, output_csv), "a") as f:
+
+                    prediction_df.to_csv(
+                        f, header=f.tell() == 0, index=False, line_terminator="\n"
+                    )
+
+                prev_time = time.time()
+                labels = []
+                probabilities = []
+                time_stamp = []
+                quarter_time_stamp = []
+                video_id = []
 
             # if the `q` key was pressed, break from the loop
             if cv2.waitKey(1) == ord("q"):

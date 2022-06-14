@@ -40,9 +40,7 @@ class Headers:
         self.make_headers()
 
     def make_headers(self):
-        headers = ""
-        for h in self.header:
-            headers += h + "|"
+        headers = "".join(h + "|" for h in self.header)
         self.headers = headers[:-1]
 
     def print_headers(self):
@@ -81,10 +79,7 @@ class Customer:
         # g_a = age_gender[min(age_gender, key=lambda x:abs(x-random.random()))]
 
         a = np.random.random()
-        c = []
-        for b in age_gender.keys():
-            if b > a:
-                c.append(b)
+        c = [b for b in age_gender.keys() if b > a]
         g_a = age_gender[min(c)]
 
         while True:
@@ -110,9 +105,9 @@ class Customer:
         age = (date.today() - self.dob).days / 365.25
         city_pop = float(self.addy.split("|")[-1])
 
-        match = []
-        for pro in all_profiles:
-            # -1 represents infinity
+        match = [
+            pro
+            for pro in all_profiles
             if (
                 self.gender in all_profiles[pro]["gender"]
                 and age >= all_profiles[pro]["age"][0]
@@ -125,26 +120,26 @@ class Customer:
                     city_pop < all_profiles[pro]["city_pop"][1]
                     or all_profiles[pro]["city_pop"][1] == -1
                 )
-            ):
-                match.append(pro)
-        if match == []:
+            )
+        ]
+
+        if not match:
             match.append("leftovers.json")
 
         # found overlap -- write to log file but continue
         if len(match) > 1:
-            f = open("profile_overlap_warnings.log", "a")
-            output = (
-                " ".join(match)
-                + ": "
-                + self.gender
-                + " "
-                + str(age)
-                + " "
-                + str(city_pop)
-                + "\n"
-            )
-            f.write(output)
-            f.close()
+            with open("profile_overlap_warnings.log", "a") as f:
+                output = (
+                    " ".join(match)
+                    + ": "
+                    + self.gender
+                    + " "
+                    + str(age)
+                    + " "
+                    + str(city_pop)
+                    + "\n"
+                )
+                f.write(output)
         return match[0]
 
     def print_customer(self):
@@ -217,5 +212,4 @@ def generate_customers(fake, num_cust, profile_config):
         cust_dtl = cust.fetch_customer()
         cust_list.append(cust_dtl)
 
-    cust_df = pd.DataFrame(cust_list, columns=headers.fetch_headers())
-    return cust_df
+    return pd.DataFrame(cust_list, columns=headers.fetch_headers())

@@ -31,26 +31,25 @@ def augmented_dickey_fuller_statistics(
     result = adfuller(time_series)
     if result[1] < 0.05:
         return _diff, time_series
-    else:
-        print(
-            coin,
-            feature_name,
-            "p-value: %f" % result[1],
-            "There is unit root (Cannot reject null hypothesis) - Repeat differencing",
-        )
+    print(
+        coin,
+        feature_name,
+        "p-value: %f" % result[1],
+        "There is unit root (Cannot reject null hypothesis) - Repeat differencing",
+    )
 
-        diff_order += 1
-        differencing = time_series.diff()
+    diff_order += 1
+    differencing = time_series.diff()
 
-        diff_df = differencing.reset_index()
-        diff_df["order"] = diff_order
-        diff_df.set_index(["coin_symbol", "date", "order"], inplace=True)
-        axis = 1 if feature_name in diff_df.columns else 0
-        _diff = pd.concat([_diff, diff_df], axis=axis, join="outer")
+    diff_df = differencing.reset_index()
+    diff_df["order"] = diff_order
+    diff_df.set_index(["coin_symbol", "date", "order"], inplace=True)
+    axis = 1 if feature_name in diff_df.columns else 0
+    _diff = pd.concat([_diff, diff_df], axis=axis, join="outer")
 
-        return augmented_dickey_fuller_statistics(
-            coin, feature_name, differencing.dropna(), diff_order, _diff
-        )
+    return augmented_dickey_fuller_statistics(
+        coin, feature_name, differencing.dropna(), diff_order, _diff
+    )
 
 
 def transform_gc_date(

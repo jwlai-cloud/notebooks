@@ -172,7 +172,7 @@ class BERTopic:
         self.verbose = verbose
 
         # Embedding model
-        self.language = language if not embedding_model else None
+        self.language = None if embedding_model else language
         self.embedding_model = embedding_model
 
         # Vectorizer
@@ -444,9 +444,7 @@ class BERTopic:
                 "This method can only be used if you did not use custom embeddings."
             )
 
-        topic_list = list(self.topics.keys())
-        topic_list.sort()
-
+        topic_list = sorted(self.topics.keys())
         # Extract search_term embeddings and compare with topic embeddings
         search_embedding = self._extract_embeddings(
             [search_term], verbose=False
@@ -530,10 +528,7 @@ class BERTopic:
         ```
         """
         check_is_fitted(self)
-        if self.topics.get(topic):
-            return self.topics[topic]
-        else:
-            return False
+        return self.topics[topic] if self.topics.get(topic) else False
 
     def get_topic_freq(self, topic: int = None) -> Union[pd.DataFrame, int]:
         """Return the the size of topics (descending order)
@@ -625,9 +620,9 @@ class BERTopic:
         check_is_fitted(self)
         if not _HAS_VIZ:
             raise ModuleNotFoundError(
-                f"In order to use this function you'll need to install "
-                f"additional dependencies;\npip install bertopic[visualization]"
+                "In order to use this function you'll need to install "
             )
+
 
         # Extract topic words and their frequencies
         topic_list = sorted(list(self.topics.keys()))
@@ -685,9 +680,9 @@ class BERTopic:
         check_is_fitted(self)
         if not _HAS_VIZ:
             raise ModuleNotFoundError(
-                f"In order to use this function you'll need to install "
-                f"additional dependencies;\npip install bertopic[visualization]"
+                "In order to use this function you'll need to install "
             )
+
         if len(probabilities[probabilities > min_probability]) == 0:
             raise ValueError(
                 "There are no values where `min_probability` is higher than the "
@@ -707,10 +702,8 @@ class BERTopic:
         labels = []
         for idx in labels_idx:
             label = []
-            words = self.get_topic(idx)
-            if words:
-                for word in words[:5]:
-                    label.append(word[0])
+            if words := self.get_topic(idx):
+                label.extend(word[0] for word in words[:5])
                 label = str(
                     r"$\bf{Topic }$ " + r"$\bf{" + str(idx) + ":}$ " + " ".join(label)
                 )
@@ -837,12 +830,12 @@ class BERTopic:
         Returns:
             out: Parameter names mapped to their values.
         """
-        out = dict()
+        out = {}
         for key in self._get_param_names():
             value = getattr(self, key)
             if deep and hasattr(value, "get_params"):
                 deep_items = value.get_params().items()
-                out.update((key + "__" + k, val) for k, val in deep_items)
+                out |= ((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
         return out
 
@@ -1002,30 +995,30 @@ class BERTopic:
         a sentence-transformer model to be used or there are custom embeddings but it is allowed
         to use a different multi-lingual sentence-transformer model
         """
-        if not self.custom_embeddings:
-            topic_list = list(self.topics.keys())
-            topic_list.sort()
-            n = self.top_n_words
+        if self.custom_embeddings:
+            return
+        topic_list = sorted(self.topics.keys())
+        n = self.top_n_words
 
-            # Extract embeddings for all words in all topics
-            topic_words = [self.get_topic(topic) for topic in topic_list]
-            topic_words = [word[0] for topic in topic_words for word in topic]
-            embeddings = self._extract_embeddings(topic_words, verbose=False)
+        # Extract embeddings for all words in all topics
+        topic_words = [self.get_topic(topic) for topic in topic_list]
+        topic_words = [word[0] for topic in topic_words for word in topic]
+        embeddings = self._extract_embeddings(topic_words, verbose=False)
 
-            # Take the weighted average of word embeddings in a topic based on their c-TF-IDF value
-            # The embeddings var is a single numpy matrix and therefore slicing is necessary to
-            # access the words per topic
-            topic_embeddings = []
-            for i, topic in enumerate(topic_list):
-                word_importance = [val[1] for val in self.get_topic(topic)]
-                if sum(word_importance) == 0:
-                    word_importance = [1 for _ in range(len(self.get_topic(topic)))]
-                topic_embedding = np.average(
-                    embeddings[i * n : n + (i * n)], weights=word_importance, axis=0
-                )
-                topic_embeddings.append(topic_embedding)
+        # Take the weighted average of word embeddings in a topic based on their c-TF-IDF value
+        # The embeddings var is a single numpy matrix and therefore slicing is necessary to
+        # access the words per topic
+        topic_embeddings = []
+        for i, topic in enumerate(topic_list):
+            word_importance = [val[1] for val in self.get_topic(topic)]
+            if sum(word_importance) == 0:
+                word_importance = [1 for _ in range(len(self.get_topic(topic)))]
+            topic_embedding = np.average(
+                embeddings[i * n : n + (i * n)], weights=word_importance, axis=0
+            )
+            topic_embeddings.append(topic_embedding)
 
-            self.topic_embeddings = topic_embeddings
+        self.topic_embeddings = topic_embeddings
 
     def _c_tf_idf(
         self, documents_per_topic: pd.DataFrame, m: int
@@ -1459,14 +1452,13 @@ class BERTopic:
             https://github.com/scikit-learn/scikit-learn/blob/b3ea3ed6a/sklearn/base.py#L178
         """
         init_signature = inspect.signature(cls.__init__)
-        parameters = sorted(
+        return sorted(
             [
                 p.name
                 for p in init_signature.parameters.values()
                 if p.name != "self" and p.kind != p.VAR_KEYWORD
             ]
         )
-        return parameters
 
     # Added by A. Ibaba on February 22 2021
     def get_most_relevant_documents(

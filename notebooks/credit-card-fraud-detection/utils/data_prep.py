@@ -48,12 +48,10 @@ def get_cust_merch_distance(df):
         The list of distance in kilometer between customers and merchants.
     """
 
-    distance = []
-
-    for r in zip(*df.to_dict("list").values()):
-        distance.append(compute_distance(r[0], r[1], r[2], r[3]))
-
-    return distance
+    return [
+        compute_distance(r[0], r[1], r[2], r[3])
+        for r in zip(*df.to_dict("list").values())
+    ]
 
 
 def is_weekend(tx_datetime):

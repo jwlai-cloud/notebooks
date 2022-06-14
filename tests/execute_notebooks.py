@@ -70,9 +70,10 @@ def execute_notebooks():
             notebook_path
             for notebook_path in NOTEBOOKS_DIRECTORY.glob("**/*.ipynb")
             if notebook_path not in NOTEBOOKS_TO_SKIP
-            and not "ipynb_checkpoints" in str(notebook_path)
+            and "ipynb_checkpoints" not in str(notebook_path)
         ]
     )
+
     for notebook_path in notebooks_path:
         logging.info(f"Starting execution of {notebook_path}")
         notebook = nbformat.read(notebook_path, as_version=4)

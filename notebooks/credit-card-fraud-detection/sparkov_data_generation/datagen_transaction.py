@@ -67,20 +67,10 @@ class Customer:
                 self.customer[["ssn", "cc_num", "acct_num", "profile"]].values.tolist()
             )
 
-            if is_traveling:
-                # hacky math.. assuming ~70 miles per 1 decimal degree of lat/long
-                # sorry for being American, you're on your own for kilometers.
-                rad = (float(travel_max) / 100) * 1.43
-
-                # geo_coordinate() uses uniform distribution with lower = (center-rad), upper = (center+rad)
-                merch_lat = fake.coordinate(center=float(cust_lat), radius=rad)
-                merch_long = fake.coordinate(center=float(cust_long), radius=rad)
-            else:
-                # otherwise not traveling, so use 1 decimial degree (~70mile) radius around home address
-                rad = 1
-                merch_lat = fake.coordinate(center=float(cust_lat), radius=rad)
-                merch_long = fake.coordinate(center=float(cust_long), radius=rad)
-
+            rad = (float(travel_max) / 100) * 1.43 if is_traveling else 1
+            # geo_coordinate() uses uniform distribution with lower = (center-rad), upper = (center+rad)
+            merch_lat = fake.coordinate(center=float(cust_lat), radius=rad)
+            merch_long = fake.coordinate(center=float(cust_long), radius=rad)
             if is_fraud == 0 and groups[1] not in fraud_dates:
                 # if cust.attrs['profile'] == "male_30_40_smaller_cities.json":
                 cust_str = (
@@ -126,7 +116,7 @@ def generate_transactions(customers, profile_name, start, end):
     headers = create_header(customers_header)
 
     pro = open(base_dir + profile_name, "r").read()
-    pro_fraud = open(base_dir + "fraud_" + profile_name, "r").read()
+    pro_fraud = open(f"{base_dir}fraud_" + profile_name, "r").read()
 
     # generate Faker object to calc merchant transaction locations
     fake = Faker()

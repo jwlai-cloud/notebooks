@@ -22,27 +22,29 @@ class Headers:
         self.print_headers()
 
     def make_headers(self):
-        headers = ""
-        for h in [
-            "ssn",
-            "first",
-            "last",
-            "gender",
-            "street",
-            "city",
-            "state",
-            "zip",
-            "lat",
-            "long",
-            "city_pop",
-            "job",
-            "dob_day",
-            "dob_month",
-            "dob_year",
-            "acct_num",
-            "profile",
-        ]:
-            headers += h + "|"
+        headers = "".join(
+            f"{h}|"
+            for h in [
+                "ssn",
+                "first",
+                "last",
+                "gender",
+                "street",
+                "city",
+                "state",
+                "zip",
+                "lat",
+                "long",
+                "city_pop",
+                "job",
+                "dob_day",
+                "dob_month",
+                "dob_year",
+                "acct_num",
+                "profile",
+            ]
+        )
+
         self.headers = headers[:-1]
 
     def print_headers(self):
@@ -130,8 +132,7 @@ def validate():
         else:
             print("Error: main.config could not be opened")
 
-        output = "\nENTER:\n (1) Number of customers\n "
-        output += "(2) Random seed (int)\n "
+        output = "\nENTER:\n (1) Number of customers\n " + "(2) Random seed (int)\n "
         output += "(3) main_config.json"
 
         print(output)

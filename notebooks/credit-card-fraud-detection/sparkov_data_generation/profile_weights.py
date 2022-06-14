@@ -63,11 +63,7 @@ class Profile:
             for day in self.profile["date_wt"]["day_of_week"].keys()
         }
         # replace any missing weekdays with 100
-        for d in [
-            day_map[day]
-            for day in day_map.keys()
-            if day not in self.profile["date_wt"]["day_of_week"].keys()
-        ]:
+        for d in [day_map[day] for day in day_map if day not in self.profile["date_wt"]["day_of_week"].keys()]:
             weekdays[d] = 100
 
         self.profile["date_wt"]["day_of_week"] = self.weight_to_prop(weekdays)
@@ -89,15 +85,19 @@ class Profile:
                     end = date(2000, int(curr_date[0]), int(curr_date[1]))
                 elif "weight" in k:
                     weight = holidays[hol][k]
-            if start == None or end == None or weight == None:
+            if start is None or end is None or weight is None:
                 sys.stderr.write(
-                    "Start or end date not found for time_of_year: " + str(hol) + "\n"
+                    f"Start or end date not found for time_of_year: {str(hol)}"
+                    + "\n"
                 )
+
                 sys.exit(0)
             elif start > end:
                 sys.stderr.write(
-                    "Start date after end date for time_of_year: " + str(hol) + "\n"
+                    f"Start date after end date for time_of_year: {str(hol)}"
+                    + "\n"
                 )
+
                 sys.exit(0)
             date_tuples.append({"start": start, "end": end, "weight": weight})
         return date_tuples
@@ -118,7 +118,7 @@ class Profile:
                 h["start"] += timedelta(days=1)
 
         # need separate weights for non-leap years
-        days_nonleap = {k: days[k] for k in days.keys() if k != (2, 29)}
+        days_nonleap = {k: days[k] for k in days if k != (2, 29)}
         # get proportions for all month/day combos
         self.profile["date_wt"]["time_of_year"] = self.weight_to_prop(days_nonleap)
         self.profile["date_wt"]["time_of_year_leap"] = self.weight_to_prop(days)
@@ -127,12 +127,8 @@ class Profile:
     # to proportions
     def prep_years(self):
         final_year = {}
-        # extract years to have transactions for
-        years = [y for y in range(self.start.year, self.end.year + 1)]
-        years.sort()
-        # extract years provided in profile
-        years_wt = [y for y in self.profile["date_wt"]["year"].keys()]
-        years_wt.sort()
+        years = sorted(range(self.start.year, self.end.year + 1))
+        years_wt = sorted(self.profile["date_wt"]["year"].keys())
         # sync weights to extracted years
         for i, y in enumerate(years):
             if years_wt[i] in self.profile["date_wt"]["year"]:
@@ -148,11 +144,7 @@ class Profile:
         curr = self.start
         while curr <= self.end:
             # leap year:
-            if curr.year % 4 == 0:
-                time_name = "time_of_year_leap"
-            else:
-                time_name = "time_of_year"
-
+            time_name = "time_of_year_leap" if curr.year % 4 == 0 else "time_of_year"
             date_wt = (
                 weights["year"][curr.year]
                 * weights[time_name][(curr.month, curr.day)]
@@ -182,7 +174,7 @@ class Profile:
         self.date_weights()
 
     def closest_rand(self, pro, num):
-        return pro[min([k for k in pro.keys() if k > num])]
+        return pro[min(k for k in pro.keys() if k > num)]
 
     def sample_amt(self, category):
         shape = (
@@ -199,9 +191,8 @@ class Profile:
             # seeing lots of <$1.00 charges, hacky fix even though it breaks the gamma distribution
             if amt < 1:
                 amt = np.random.uniform(1.00, 10.00)
-                return str("{:.2f}".format(amt))
-            if amt >= 1:
-                return str("{:.2f}".format(amt))
+                return "{:.2f}".format(amt)
+            return "{:.2f}".format(amt)
 
     def sample_time(self, am_or_pm, is_fraud):
 
@@ -214,9 +205,7 @@ class Profile:
 
             mins = random.randrange(60)
             secs = random.randrange(60)
-            time_stamp = (
-                str(hour).zfill(2) + ":" + str(mins).zfill(2) + ":" + str(secs).zfill(2)
-            )
+            time_stamp = f"{str(hour).zfill(2)}:{str(mins).zfill(2)}:{str(secs).zfill(2)}"
 
         if is_fraud == 1:
 
@@ -229,31 +218,21 @@ class Profile:
                 if am_or_pm == "PM":
                     hour = random.randrange(12, 24, 1)
 
-                mins = random.randrange(60)
-                secs = random.randrange(60)
-                time_stamp = (
-                    str(hour).zfill(2)
-                    + ":"
-                    + str(mins).zfill(2)
-                    + ":"
-                    + str(secs).zfill(2)
-                )
-
             else:
                 if am_or_pm == "AM":
                     hour = random.randrange(0, 4, 1)
                 if am_or_pm == "PM":
                     hour = random.randrange(22, 24, 1)
 
-                mins = random.randrange(60)
-                secs = random.randrange(60)
-                time_stamp = (
-                    str(hour).zfill(2)
-                    + ":"
-                    + str(mins).zfill(2)
-                    + ":"
-                    + str(secs).zfill(2)
-                )
+            mins = random.randrange(60)
+            secs = random.randrange(60)
+            time_stamp = (
+                str(hour).zfill(2)
+                + ":"
+                + str(mins).zfill(2)
+                + ":"
+                + str(secs).zfill(2)
+            )
 
         return time_stamp
 
@@ -308,13 +287,14 @@ class Profile:
                         str(trans_num),
                         chosen_date.strftime("%Y-%m-%d"),
                         stamp,
-                        str(epoch),
+                        epoch,
                         str(chosen_cat),
                         str(chosen_amt),
                         str(is_fraud),
                     ]
                 )
             )
-            # else:
-            #    pass
+
+                # else:
+                #    pass
         return output, is_traveling, travel_max, fraud_dates

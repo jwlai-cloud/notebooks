@@ -31,5 +31,5 @@ category_list = [
 print(header)
 
 for c in category_list:
-    for _ in range(0, n):
-        print(c + "|" + "fraud_" + fake.company())
+    for _ in range(n):
+        print(f"{c}|fraud_{fake.company()}")

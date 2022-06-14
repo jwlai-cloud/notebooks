@@ -16,7 +16,7 @@ class MyLogger:
         self.logger.propagate = False
 
     def info(self, message):
-        self.logger.info("{}".format(message))
+        self.logger.info(f"{message}")
 
     def set_level(self, level):
         levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -35,32 +35,32 @@ class MyLogger:
 
 def check_documents_type(documents):
     """Check whether the input documents are indeed a list of strings"""
-    if isinstance(documents, Iterable) and not isinstance(documents, str):
-        if not any([isinstance(doc, str) for doc in documents]):
-            raise TypeError("Make sure that the iterable only contains strings.")
-
-    else:
+    if not isinstance(documents, Iterable) or isinstance(documents, str):
         raise TypeError(
             "Make sure that the documents variable is an iterable containing strings only."
         )
+    if not any(isinstance(doc, str) for doc in documents):
+        raise TypeError("Make sure that the iterable only contains strings.")
 
 
 def check_embeddings_shape(embeddings, docs):
     """Check if the embeddings have the correct shape"""
     if embeddings is not None:
         if not any(
-            [isinstance(embeddings, np.ndarray), isinstance(embeddings, csr_matrix)]
+            [
+                isinstance(embeddings, np.ndarray),
+                isinstance(embeddings, csr_matrix),
+            ]
         ):
             raise ValueError(
                 "Make sure to input embeddings as a numpy array or scipy.sparse.csr.csr_matrix. "
             )
-        else:
-            if embeddings.shape[0] != len(docs):
-                raise ValueError(
-                    "Make sure that the embeddings are a numpy array with shape: "
-                    "(len(docs), vector_dim) where vector_dim is the dimensionality "
-                    "of the vector embeddings. "
-                )
+        if embeddings.shape[0] != len(docs):
+            raise ValueError(
+                "Make sure that the embeddings are a numpy array with shape: "
+                "(len(docs), vector_dim) where vector_dim is the dimensionality "
+                "of the vector embeddings. "
+            )
 
 
 def check_is_fitted(model):
@@ -72,12 +72,12 @@ def check_is_fitted(model):
     Raises:
         ValueError: If the matches were not found.
     """
-    msg = (
-        "This %(name)s instance is not fitted yet. Call 'fit' with "
-        "appropriate arguments before using this estimator."
-    )
-
     if not model.topics:
+        msg = (
+            "This %(name)s instance is not fitted yet. Call 'fit' with "
+            "appropriate arguments before using this estimator."
+        )
+
         raise ValueError(msg % {"name": type(model).__name__})
 
 
@@ -106,9 +106,10 @@ def remove_emails_hashtags(text):
         word = word.strip()
         if "#" in word:
             hastag_counts += 1
-        if word:
-            if "#" in word and hastag_counts < 2 or word[0] not in entity_prefixes:
-                words.append(word)
+        if word and (
+            "#" in word and hastag_counts < 2 or word[0] not in entity_prefixes
+        ):
+            words.append(word)
 
     return " ".join(words)
 

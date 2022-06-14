@@ -33,9 +33,10 @@ def remove_emails_hashtags(text):
         word = word.strip()
         if "#" in word:
             hastag_counts += 1
-        if word:
-            if "#" in word and hastag_counts < 2 or word[0] not in entity_prefixes:
-                words.append(word)
+        if word and (
+            "#" in word and hastag_counts < 2 or word[0] not in entity_prefixes
+        ):
+            words.append(word)
 
     return " ".join(words)
 
